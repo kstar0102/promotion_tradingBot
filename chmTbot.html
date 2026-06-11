@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KuCoin Trading Bot | Windows Desktop Trading Assistant</title>
+    <meta
+      name="description"
+      content="KuCoin Trading Bot is a Windows desktop trading platform for active KuCoin traders, combining live market data, technical indicators, support and resistance mapping, rule-based screening, alerts, and an optional AI confirmation layer."
+    >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    >
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #04070d;
+        --bg-soft: rgba(7, 12, 21, 0.82);
+        --surface: rgba(12, 19, 30, 0.72);
+        --surface-strong: rgba(17, 26, 40, 0.88);
+        --surface-highlight: rgba(255, 255, 255, 0.08);
+        --border: rgba(255, 255, 255, 0.12);
+        --text: #f5fbff;
+        --muted: #b7c4d4;
+        --accent: #67f3b0;
+        --accent-strong: #65cbff;
+        --accent-soft: rgba(103, 243, 176, 0.16);
+        --warning: #ffd166;
+        --danger: #ff8f70;
+        --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+        --radius-xl: 30px;
+        --radius-lg: 24px;
+        --radius-md: 18px;
+        --radius-sm: 14px;
+        --font-display: "Space Grotesk", system-ui, sans-serif;
+        --font-body: "Manrope", system-ui, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+        font-family: var(--font-body);
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(103, 243, 176, 0.14), transparent 28%),
+          radial-gradient(circle at top right, rgba(101, 203, 255, 0.16), transparent 34%),
+          linear-gradient(180deg, #04070d 0%, #071019 44%, #03060b 100%);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -3;
+        background-image:
+          linear-gradient(115deg, rgba(2, 5, 10, 0.78), rgba(2, 5, 10, 0.3) 45%, rgba(2, 5, 10, 0.82)),
+          url("https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1800&q=80");
+        background-position: center;
+        background-size: cover;
+        filter: saturate(1.08) contrast(1.02) brightness(0.72);
+        transform: scale(1.04);
+      }
+
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background:
+          linear-gradient(180deg, rgba(4, 7, 13, 0.56), rgba(4, 7, 13, 0.9)),
+          radial-gradient(circle at center, transparent 0%, rgba(4, 7, 13, 0.62) 72%),
+          repeating-linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.02) 0,
+            rgba(255, 255, 255, 0.02) 1px,
+            transparent 1px,
+            transparent 160px
+          );
+        pointer-events: none;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      img {
+        max-width: 100%;
+        display: block;
+      }
+
+      .page-glow {
+        position: fixed;
+        z-index: -1;
+        border-radius: 999px;
+        filter: blur(18px);
+        pointer-events: none;
+        opacity: 0.7;
+      }
+
+      .page-glow--one {
+        top: 120px;
+        left: -110px;
+        width: 260px;
+        height: 260px;
+        background: rgba(103, 243, 176, 0.12);
+        animation: drift 18s ease-in-out infinite;
+      }
+
+      .page-glow--two {
+        right: -90px;
+        bottom: 140px;
+        width: 300px;
+        height: 300px;
+        background: rgba(101, 203, 255, 0.13);
+        animation: drift 22s ease-in-out infinite reverse;
+      }
+
+      .container {
+        width: min(1160px, calc(100vw - 40px));
+        margin: 0 auto;
+      }
+
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        background: rgba(4, 7, 13, 0.58);
+        backdrop-filter: blur(18px);
+      }
+
+      .nav__inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        min-height: 78px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-family: var(--font-display);
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .brand__mark {
+        display: inline-grid;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 14px;
+        background:
+          linear-gradient(135deg, rgba(103, 243, 176, 0.92), rgba(101, 203, 255, 0.92)),
+          #0a121b;
+        color: #041018;
+        box-shadow: 0 20px 34px rgba(103, 243, 176, 0.2);
+      }
+
+      .nav__links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px 20px;
+        color: var(--muted);
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+
+      .nav__links a {
+        transition: color 0.2s ease;
+      }
+
+      .nav__links a:hover {
+        color: var(--text);
+      }
+
+      .nav__cta {
+        padding: 10px 14px;
+        border: 1px solid rgba(103, 243, 176, 0.28);
+        border-radius: 999px;
+        background: rgba(103, 243, 176, 0.08);
+        color: var(--text);
+      }
+
+      .hero {
+        position: relative;
+        padding: 84px 0 42px;
+      }
+
+      .hero__grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.06fr) minmax(320px, 0.94fr);
+        gap: 32px;
+        align-items: center;
+      }
+
+      .hero__content,
+      .hero-card,
+      .band-card,
+      .card {
+        animation: rise 0.8s ease both;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid rgba(103, 243, 176, 0.24);
+        border-radius: 999px;
+        background: rgba(103, 243, 176, 0.08);
+        color: var(--accent);
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .hero__title {
+        max-width: 760px;
+        margin: 18px 0 18px;
+        font-family: var(--font-display);
+        font-size: clamp(2.7rem, 5vw, 5.7rem);
+        line-height: 0.96;
+        letter-spacing: -0.03em;
+      }
+
+      .hero__summary {
+        max-width: 720px;
+        font-size: 1.08rem;
+      }
+
+      .hero__cta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 28px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 52px;
+        padding: 13px 18px;
+        border: 1px solid transparent;
+        border-radius: 16px;
+        font-weight: 800;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+      }
+
+      .button:hover {
+        transform: translateY(-2px);
+      }
+
+      .button--primary {
+        color: #051018;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        box-shadow: 0 18px 40px rgba(103, 243, 176, 0.26);
+      }
+
+      .button--secondary {
+        border-color: rgba(101, 203, 255, 0.3);
+        background: rgba(101, 203, 255, 0.12);
+        color: var(--text);
+      }
+
+      .button--ghost {
+        border-color: var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text);
+      }
+
+      .hero__chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 26px;
+      }
+
+      .chip {
+        padding: 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        color: #d8e2ef;
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .hero-card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: var(--radius-xl);
+        background:
+          linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03)),
+          rgba(8, 13, 22, 0.78);
+        backdrop-filter: blur(22px);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-card::before {
+        content: "";
+        position: absolute;
+        inset: -40% auto auto 58%;
+        width: 220px;
+        height: 220px;
+        border-radius: 999px;
+        background: rgba(101, 203, 255, 0.14);
+        filter: blur(10px);
+      }
+
+      .hero-card__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 22px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .hero-card__label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+      }
+
+      .live-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 0 8px rgba(103, 243, 176, 0.14);
+        animation: pulse 2.8s ease-in-out infinite;
+      }
+
+      .hero-card__status {
+        padding: 8px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+
+      .hero-card__body {
+        position: relative;
+        padding: 18px;
+      }
+
+      .hero-shot {
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .hero-shot img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .hero-shot__caption {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        padding: 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(5, 10, 18, 0.9);
+      }
+
+      .hero-shot__stat {
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .hero-shot__stat span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .hero-shot__stat strong {
+        display: block;
+        margin-top: 6px;
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+      }
+
+      .hero-band {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 28px;
+      }
+
+      .band-card {
+        padding: 18px 20px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 22px;
+        background: rgba(10, 16, 26, 0.6);
+        backdrop-filter: blur(12px);
+      }
+
+      .band-card strong {
+        display: block;
+        margin-bottom: 8px;
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+      }
+
+      .section {
+        padding: 42px 0;
+      }
+
+      .section__header {
+        max-width: 760px;
+        margin-bottom: 24px;
+      }
+
+      .section__title {
+        margin: 0 0 10px;
+        font-family: var(--font-display);
+        font-size: clamp(1.9rem, 2.5vw, 2.8rem);
+        line-height: 1.05;
+      }
+
+      .section__subtitle {
+        margin: 0;
+      }
+
+      .grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .grid--three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .grid--two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        background: var(--surface);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+        transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(103, 243, 176, 0.18);
+        background: rgba(13, 20, 32, 0.82);
+      }
+
+      .card--strong {
+        background:
+          linear-gradient(160deg, rgba(103, 243, 176, 0.11), rgba(101, 203, 255, 0.08)),
+          var(--surface-strong);
+      }
+
+      .card h3 {
+        margin: 0 0 10px;
+        font-family: var(--font-display);
+        font-size: 1.14rem;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 16px;
+        padding: 6px 11px;
+        border: 1px solid rgba(103, 243, 176, 0.22);
+        border-radius: 999px;
+        color: var(--accent);
+        background: rgba(103, 243, 176, 0.08);
+        font-weight: 800;
+        font-size: 0.76rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .feature-list {
+        display: grid;
+        gap: 10px;
+        margin: 16px 0 0;
+        padding: 0;
+        list-style: none;
+        color: var(--muted);
+      }
+
+      .feature-list li::before {
+        content: "+";
+        margin-right: 10px;
+        color: var(--accent);
+        font-weight: 800;
+      }
+
+      .steps {
+        counter-reset: steps;
+      }
+
+      .step {
+        padding-left: 72px;
+      }
+
+      .step::before {
+        counter-increment: steps;
+        content: "0" counter(steps);
+        position: absolute;
+        left: 24px;
+        top: 24px;
+        display: inline-grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: #061019;
+        font-family: var(--font-display);
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .pricing {
+        display: grid;
+        grid-template-columns: 0.98fr 1.02fr;
+        gap: 18px;
+        align-items: stretch;
+      }
+
+      .price {
+        margin: 12px 0 12px;
+        font-family: var(--font-display);
+        font-size: 2.85rem;
+        line-height: 1;
+      }
+
+      .price span {
+        color: var(--muted);
+        font-family: var(--font-body);
+        font-size: 1rem;
+      }
+
+      .pricing-note {
+        margin-top: 16px;
+        padding: 14px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .contact-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr 0.9fr;
+        gap: 18px;
+      }
+
+      .contact-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        font-weight: 800;
+        color: var(--text);
+      }
+
+      .contact-link:hover {
+        color: var(--accent);
+      }
+
+      .contact-card__value {
+        margin-top: 14px;
+        font-family: var(--font-display);
+        font-size: 1.3rem;
+        line-height: 1.25;
+      }
+
+      .disclaimer {
+        border-color: rgba(255, 209, 102, 0.24);
+        background: rgba(255, 209, 102, 0.08);
+      }
+
+      .disclaimer p {
+        color: #f2e0b0;
+      }
+
+      .footer {
+        padding: 34px 0 44px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        color: var(--muted);
+      }
+
+      .footer__inner {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 14px 20px;
+      }
+
+      .footer__credit a {
+        color: var(--text);
+      }
+
+      .footer__credit a:hover {
+        color: var(--accent);
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(103, 243, 176, 0.14);
+        }
+
+        50% {
+          transform: scale(1.05);
+          box-shadow: 0 0 0 10px rgba(103, 243, 176, 0.02);
+        }
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(22px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes drift {
+        0%,
+        100% {
+          transform: translate3d(0, 0, 0);
+        }
+
+        50% {
+          transform: translate3d(18px, -18px, 0);
+        }
+      }
+
+      @media (max-width: 980px) {
+        .hero__grid,
+        .hero-band,
+        .pricing,
+        .contact-grid,
+        .grid--two,
+        .grid--three {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          padding-top: 62px;
+        }
+      }
+
+      @media (max-width: 700px) {
+        .container {
+          width: min(100vw - 24px, 1160px);
+        }
+
+        .nav__inner {
+          align-items: flex-start;
+          flex-direction: column;
+          padding: 14px 0;
+        }
+
+        .nav__links {
+          justify-content: flex-start;
+        }
+
+        .hero__title {
+          font-size: clamp(2.35rem, 12vw, 4.2rem);
+        }
+
+        .hero-shot__caption {
+          grid-template-columns: 1fr;
+        }
+
+        .step {
+          padding-left: 24px;
+          padding-top: 68px;
+        }
+
+        .step::before {
+          left: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-glow page-glow--one"></div>
+    <div class="page-glow page-glow--two"></div>
+
+    <nav class="nav">
+      <div class="container nav__inner">
+        <a class="brand" href="#top" aria-label="KuCoin Trading Bot home">
+          <span class="brand__mark">K</span>
+          <span>KuCoin Trading Bot</span>
+        </a>
+        <div class="nav__links" aria-label="Page navigation">
+          <a href="#features">Features</a>
+          <a href="#control">Control</a>
+          <a href="#workflow">Workflow</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#contact">Contact</a>
+          <a class="nav__cta" href="https://t.me/Iori_Kai95" target="_blank" rel="noreferrer">Get Access</a>
+        </div>
+      </div>
+    </nav>
+
+    <main id="top">
+      <header class="hero">
+        <div class="container hero__grid">
+          <div class="hero__content">
+            <div class="eyebrow">Windows desktop trading platform</div>
+            <h1 class="hero__title">Catch the rare setups without watching charts all day.</h1>
+            <p class="hero__summary">
+              Stop spending every day watching charts just to catch the few moments that actually matter. KuCoin Trading
+              Bot monitors the market for you, filters the noise, and alerts you when a setup matches your rules.
+            </p>
+            <div class="hero__cta">
+              <a class="button button--primary" href="https://t.me/Iori_Kai95" target="_blank" rel="noreferrer">
+                Get Access on Telegram
+              </a>
+              <a class="button button--secondary" href="https://wa.me/18392793345" target="_blank" rel="noreferrer">
+                Ask on WhatsApp
+              </a>
+              <a class="button button--ghost" href="#features">See How It Works</a>
+            </div>
+            <div class="hero__chips" aria-label="Highlights">
+              <span class="chip">Live pair scanning</span>
+              <span class="chip">Telegram + desktop alerts</span>
+              <span class="chip">Manual execution control</span>
+              <span class="chip">Windows-first workflow</span>
+            </div>
+          </div>
+
+          <aside class="hero-card" aria-label="Trading bot application preview">
+            <div class="hero-card__top">
+              <div class="hero-card__label">
+                <span class="live-dot"></span>
+                <span>Platform preview</span>
+              </div>
+              <span class="hero-card__status">Real app screen</span>
+            </div>
+            <div class="hero-card__body">
+              <div class="hero-shot">
+                <img src="homescreen.png" alt="KuCoin Trading Bot desktop application showing charting, indicator controls, monitored pairs, and order book data">
+                <div class="hero-shot__caption">
+                  <div class="hero-shot__stat">
+                    <span>Monitoring pairs</span>
+                    <strong>900</strong>
+                  </div>
+                  <div class="hero-shot__stat">
+                    <span>Top pairs</span>
+                    <strong>10</strong>
+                  </div>
+                  <div class="hero-shot__stat">
+                    <span>Signal focus</span>
+                    <strong>Live</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="container">
+          <div class="hero-band">
+            <div class="band-card">
+              <strong>Less chart hopping</strong>
+              <p>Built for traders who do not want to watch charts all day, but also do not want to miss rare, high-quality setups.</p>
+            </div>
+            <div class="band-card">
+              <strong>Faster signal review</strong>
+              <p>The platform reduces constant screen monitoring while keeping you ready for selective entry opportunities.</p>
+            </div>
+            <div class="band-card">
+              <strong>Direct access to you</strong>
+              <p>Visitors can contact you immediately on Telegram or WhatsApp from the page.</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="section container" id="intro">
+        <div class="grid grid--two">
+          <article class="card card--strong">
+            <span class="tag">Overview</span>
+            <h2 class="section__title">A scanner, alerting tool, and trade review assistant.</h2>
+            <p>
+              KuCoin Trading Bot is a Windows desktop market-monitoring and trade-screening platform built for active
+              crypto traders. It streams live KuCoin market data, applies technical analysis using EMA, SMA, RSI, MACD,
+              Bollinger Bands, ATR, pivot levels, and support/resistance detection, then evaluates each setup against
+              configurable entry rules such as support-touch distance, expected return, stop-loss placement, and minimum
+              risk/reward.
+            </p>
+          </article>
+          <article class="card">
+            <span class="tag">Trust bar</span>
+            <h3>Built for support, not blind execution.</h3>
+            <p>
+              The platform also provides charting, order book context, symbol monitoring, desktop and Telegram alerts,
+              and an optional OpenAI-powered AI confirmation layer that performs a second-pass review before qualifying
+              alerts are sent.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section container" id="features">
+        <div class="section__header">
+          <h2 class="section__title">What the app actually does</h2>
+          <p class="section__subtitle">
+            It keeps live market monitoring, technical analysis, risk filtering, and alert delivery in one workflow so
+            active traders can focus on reviewing high-quality setups instead of scanning manually.
+          </p>
+        </div>
+        <div class="grid grid--three">
+          <article class="card">
+            <span class="tag">Markets</span>
+            <h3>Live KuCoin monitoring</h3>
+            <p>Track selected pairs with fresh candles, ticker data, and order book context in a desktop interface.</p>
+          </article>
+          <article class="card">
+            <span class="tag">Levels</span>
+            <h3>Support and resistance mapping</h3>
+            <p>Spot trade zones faster with automatically calculated support, resistance, and pivot context.</p>
+          </article>
+          <article class="card">
+            <span class="tag">Rules</span>
+            <h3>Rule-based entry screening</h3>
+            <p>Filter setups with thresholds for expected return, support-touch buffer, stop placement, and risk/reward.</p>
+          </article>
+          <article class="card">
+            <span class="tag">Charts</span>
+            <h3>Built-in chart workflow</h3>
+            <p>Review price action, indicators, symbol rotation, and price history without jumping across tabs.</p>
+          </article>
+          <article class="card">
+            <span class="tag">Alerts</span>
+            <h3>Telegram and desktop alerts</h3>
+            <p>Get notified when a setup appears, whether you are at the screen or away from it.</p>
+          </article>
+          <article class="card">
+            <span class="tag">AI Review</span>
+            <h3>AI-assisted second look</h3>
+            <p>Optionally send candidate entries through an OpenAI-powered confirmation layer before an alert is sent.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section container" id="control">
+        <div class="grid grid--two">
+          <article class="card card--strong">
+            <span class="tag">Why it is different</span>
+            <h2 class="section__title">You stay in control.</h2>
+            <p>
+              This is not a promise machine and it is not a blind execution engine. It is a decision-support tool for
+              traders who want structure, speed, and better visibility. You define the rules. The app does the monitoring.
+            </p>
+          </article>
+          <article class="card">
+            <span class="tag">Who it is for</span>
+            <h3>Built for traders who want signal discipline</h3>
+            <ul class="feature-list">
+              <li>Active KuCoin traders monitoring multiple USDT pairs</li>
+              <li>Traders who want alerts based on rules instead of emotion</li>
+              <li>Users who prefer a desktop tool over a browser-only workflow</li>
+              <li>Traders who want optional Telegram delivery for setups</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section container" id="workflow">
+        <div class="section__header">
+          <h2 class="section__title">How it works</h2>
+          <p class="section__subtitle">
+            Install the Windows app, configure your watchlist and rules, and let the scanner handle the repetitive work.
+          </p>
+        </div>
+        <div class="grid grid--three steps">
+          <article class="card step">
+            <h3>Connect your watchlist</h3>
+            <p>Add the KuCoin USDT pairs you want the assistant to monitor.</p>
+          </article>
+          <article class="card step">
+            <h3>Set your trading rules</h3>
+            <p>Define expected return, support-touch buffer, stop placement, indicators, and risk/reward thresholds.</p>
+          </article>
+          <article class="card step">
+            <h3>Review signals faster</h3>
+            <p>Receive desktop or Telegram alerts when a setup qualifies, then decide whether to act.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section container" id="pricing">
+        <div class="pricing">
+          <article class="card card--strong">
+            <span class="tag">Windows access</span>
+            <h2 class="section__title">KuCoin Trading Bot</h2>
+            <p class="price">$29<span>/one-time payment</span></p>
+            <p>
+              A desktop-first trading platform for active KuCoin traders who want live market monitoring, structured
+              technical screening, and faster signal review in one place.
+            </p>
+            <div class="pricing-note">
+              <p>Need access or have questions before buying? Reach out directly and we can continue on Telegram or WhatsApp.</p>
+            </div>
+            <div class="hero__cta" style="margin-top: 22px;">
+              <a class="button button--primary" href="https://t.me/Iori_Kai95" target="_blank" rel="noreferrer">
+                Get Access Now
+              </a>
+            </div>
+          </article>
+          <article class="card">
+            <h3>Included</h3>
+            <ul class="feature-list">
+              <li>Live pair monitoring</li>
+              <li>Support and resistance detection</li>
+              <li>Indicator-based analysis</li>
+              <li>Order book and price-history context</li>
+              <li>Desktop and Telegram alerts</li>
+              <li>Optional AI-assisted confirmation before alerts</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section container" id="contact">
+        <div class="section__header">
+          <h2 class="section__title">Talk to me directly</h2>
+          <p class="section__subtitle">
+            If someone wants the bot, wants a demo, or wants setup help, they can contact you right from the page.
+          </p>
+        </div>
+        <div class="contact-grid">
+          <article class="card card--strong">
+            <span class="tag">Direct contact</span>
+            <h3>Spend less time scanning and more time reviewing valid setups.</h3>
+            <p>
+              If you trade KuCoin pairs on Windows and want a desktop-first monitoring tool, message me and I will help
+              you with pricing, access, or the next step.
+            </p>
+            <a class="contact-link" href="https://t.me/Iori_Kai95" target="_blank" rel="noreferrer">Open Telegram -></a>
+            <a class="contact-link" href="https://wa.me/18392793345" target="_blank" rel="noreferrer">Open WhatsApp -></a>
+          </article>
+          <article class="card">
+            <span class="tag">Telegram</span>
+            <h3>Fastest way to reach me</h3>
+            <p>Best for quick questions, access requests, and direct conversation about the trading bot.</p>
+            <div class="contact-card__value">@Iori_Kai95</div>
+            <a class="contact-link" href="https://t.me/Iori_Kai95" target="_blank" rel="noreferrer">Message on Telegram -></a>
+          </article>
+          <article class="card">
+            <span class="tag">WhatsApp</span>
+            <h3>Talk by number</h3>
+            <p>Useful for buyers who prefer WhatsApp for setup details, support, or payment discussion.</p>
+            <div class="contact-card__value">+1 839 279 3345</div>
+            <a class="contact-link" href="https://wa.me/18392793345" target="_blank" rel="noreferrer">Chat on WhatsApp -></a>
+          </article>
+        </div>
+      </section>
+
+      <section class="section container">
+        <article class="card disclaimer">
+          <h3>Important note</h3>
+          <p>
+            KuCoin Trading Bot is an analysis and alerting tool. It does not guarantee profit and does not constitute
+            financial advice. Markets involve risk, and users remain responsible for execution and risk management.
+          </p>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <span>KuCoin Trading Bot | Desktop scanner, alerts, and risk-aware trade preparation.</span>
+        <span class="footer__credit">
+          Background photo inspired by trading-screen imagery from
+          <a href="https://unsplash.com/s/photos/market-analysis" target="_blank" rel="noreferrer">Unsplash</a>.
+        </span>
+      </div>
+    </footer>
+  </body>
+</html>
